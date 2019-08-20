@@ -7,7 +7,7 @@
             [magic.analyzer.binder :refer [select-method]]
             [magic.interop :as interop]
             [clojure.string :as string])
-  (:import [clojure.lang Var RT IFn Keyword Symbol]
+  (:import [clojure.lang Var RT IFn Keyword Symbol Namespace]
            [System.IO FileInfo Path]
            [System.Reflection.Emit OpCodes]
            [System.Reflection
@@ -292,6 +292,10 @@
   [(load-constant (.Namespace k))
    (load-constant (.Name k))
    (il/call (interop/method Keyword "intern" String String))])
+
+(defmethod load-constant Namespace [k]
+  [(load-constant (.Name k))
+   (il/call (interop/method Namespace "findOrCreate" Symbol))])
 
 (defmethod load-constant Symbol [k]
   [(load-constant (.Namespace k))
@@ -623,6 +627,13 @@
                    (convert (ast-type then) if-expr-type))
                  end-label])))
 
+(defn def-compiler
+  [{:keys [var init] :as ast} compilers]
+  [(load-constant (.Namespace var))
+   (load-constant (.sym var))
+   (load-constant (:val init))
+   (il/call (interop/method clojure.lang.Var "intern" clojure.lang.Namespace clojure.lang.Symbol System.Object))])
+
 (defn binding-compiler
   [{:keys [init] :as ast} compilers]
   (compile init compilers))
@@ -945,6 +956,7 @@
    :initobj             #'initobj-compiler
    :new                 #'new-compiler
    :intrinsic           #'intrinsic-compiler
+   :def                 #'def-compiler
    })
 
 (def ^:dynamic *spells* [])

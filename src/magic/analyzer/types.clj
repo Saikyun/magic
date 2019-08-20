@@ -172,6 +172,9 @@
 (defmethod ast-type :vector [ast]
   clojure.lang.IPersistentVector)
 
+(defmethod ast-type :def [ast]
+  clojure.lang.Var)
+
 (defmethod ast-type :set [ast]
   clojure.lang.IPersistentSet)
 
